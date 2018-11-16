@@ -1,4 +1,4 @@
-public class GameData {
+public class GameData implements java.io.Serializable{
 
     private DataType    type;
     private String      content;

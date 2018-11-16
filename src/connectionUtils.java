@@ -3,10 +3,6 @@ import java.io.IOException;
 
 class connectionUtils {
 
-    final static String QUESTION = "question";
-    final static String CLIENT_ANSWER = "answer";
-    final static String UPDATE = "update";
-
     static void sendClient(ObjectOutputStream os, GameData s){
         try {
             os.writeObject(s);

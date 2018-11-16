@@ -14,7 +14,9 @@ public class Main {
         ServerSocket ss = new ServerSocket(4444);
         System.out.println("Server is up!");
         Socket socket0 = ss.accept();
+        System.out.println("player0 connected");
         Socket socket1 = ss.accept();
+        System.out.println("player1 connected");
         List<GameData> data         = new ArrayList();
         List<String> answers        = new ArrayList();
         getData(data,answers);

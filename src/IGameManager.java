@@ -6,7 +6,9 @@ public interface IGameManager {
 
     public boolean isClientTurn(int clientId);
 
-    public GameData getTurnData();
+    public GameData getTurnGameData();
 
-    public String getTurnDataAnswer();
+    public String getTurnGameDataAnswer();
+
+    void updateScore(int clientID ,int turnScore);
 }
