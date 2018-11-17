@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -10,25 +11,45 @@ public class Main {
     private final static int NUM_PLAYERS = 2;
 
     public static void main(String[] args) throws IOException{
-        ObjectOutputStream[] osAll = new ObjectOutputStream[NUM_PLAYERS];
+
         ServerSocket ss = new ServerSocket(4444);
         System.out.println("Server is up!");
-        Socket socket0 = ss.accept();
-        System.out.println("player0 connected");
-        Socket socket1 = ss.accept();
-        System.out.println("player1 connected");
+
+        // setting up variables needed for game
+        ServerWorker[] serverWorkers = new ServerWorker[NUM_PLAYERS];
+        ObjectOutputStream[] osAll = new ObjectOutputStream[NUM_PLAYERS];
         List<GameData> data         = new ArrayList();
         List<String> answers        = new ArrayList();
         getData(data,answers);
         IGameManager gameManager = new GameManagerImpl(NUM_PLAYERS,osAll , data ,answers);
 
-        Thread p1 = new Thread(new ServerWorker(socket0, osAll ,0 , gameManager));
-        Thread p2 = new Thread(new ServerWorker(socket1, osAll ,1 , gameManager));
-        p1.start();
-        p2.start();
+        for(int i=0 ; i<NUM_PLAYERS ; i++){
+            Socket socket = ss.accept();
+            try {
+                ObjectOutputStream os = new ObjectOutputStream(socket.getOutputStream());
+                ObjectInputStream is = new ObjectInputStream(socket.getInputStream());
+                osAll[i] = os;
+                serverWorkers[i] = new ServerWorker(socket , i , is , os , gameManager);
+                System.out.println(String.format("player %d connected",i));
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                ConnectionUtils.closeClient(socket);
+                i--;
+            }
+        }
+
+        // all players connected - start game
+        for ( int i = 0 ; i<NUM_PLAYERS ; i++) {
+            Thread p = new Thread(serverWorkers[i]);
+            p.start();
+        }
 
     }
 
+    /*
+    TODO - Fetch data from DB
+     */
     private static void getData(List data,List answers) {
         for(int i = 0 ; i<10 ; i++) {
             data.add(new GameData(GameData.DataType.QUESTION , "1+"+i));

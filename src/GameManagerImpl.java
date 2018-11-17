@@ -1,5 +1,4 @@
 import java.io.ObjectOutputStream;
-import java.util.ArrayList;
 import java.util.List;
 
 public class GameManagerImpl implements IGameManager {
@@ -34,9 +33,8 @@ public class GameManagerImpl implements IGameManager {
     @Override
     public void turnFinished() {
         System.out.println("client" + currentTurn%NUM_PLAYERS +" finished his turn");
-//        System.out.println("game status "+ scores.toString());
         GameData update = getUpdate();
-        connectionUtils.sendAllClients(clients,update);
+        ConnectionUtils.sendAllClients(clients,update);
         currentTurn +=1;
         nextTurn();
     }
@@ -64,13 +62,18 @@ public class GameManagerImpl implements IGameManager {
     private void nextTurn(){
         int nextClientId = currentTurn%NUM_PLAYERS;
         GameData currTurnData = getTurnGameData();
-        connectionUtils.sendClient(clients[nextClientId],currTurnData);
+        ConnectionUtils.sendClient(clients[nextClientId],currTurnData);
         System.out.println("sent client " + nextClientId +":" + currTurnData);
     }
 
+
+    // collect all users scores and place them in GameData
     private GameData getUpdate() {
-        // collect all users scores and place them in GameData
-        return new GameData(GameData.DataType.UPDATE,"game status " + scores.toString());
+        String scoresSummary = "";          // TODO - replace with StringBuilder
+        for (int i = 0;i<scores.length;i++){
+            scoresSummary += String.format("player%d:%d  ",i,scores[i]);
+        }
+        return new GameData(GameData.DataType.UPDATE,"game status " + scoresSummary);
     }
 
 }
