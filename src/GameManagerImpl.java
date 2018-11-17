@@ -1,6 +1,8 @@
 import java.io.ObjectOutputStream;
 import java.util.List;
 
+// TODO - implement game finished
+
 public class GameManagerImpl implements IGameManager {
 
     private List<GameData>  turnsData;
