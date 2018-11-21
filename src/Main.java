@@ -6,11 +6,12 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
+
 // TODO - implement private and public rooms - generalization of loop in main
 
 public class Main {
 
-    private final static int NUM_PLAYERS = 2;
+    private final static int NUM_PLAYERS = 1;
 
     public static void main(String[] args) throws IOException{
 

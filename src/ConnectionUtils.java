@@ -2,13 +2,16 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import com.google.gson.Gson;
 
 // TODO - improve exception handling
 // client exits unexpectedly
 
 class ConnectionUtils {
 
-    static void sendClient(ObjectOutputStream os, GameData s){
+    static void sendClient(ObjectOutputStream os, GameData gameData){
+        Gson gson = new Gson();
+        String s = gson.toJson(gameData);
         try {
             os.writeObject(s);
         } catch (IOException e) {
@@ -33,8 +36,10 @@ class ConnectionUtils {
 
     public static GameData readClient(ObjectInputStream is) {
         GameData m = null;
+        Gson gson = new Gson();
         try {
-            m = (GameData) is.readObject();
+            String s = (String) is.readObject();
+            m = gson.fromJson(s,GameData.class);
 
         } catch (IOException e) {
             e.printStackTrace();
