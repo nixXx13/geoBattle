@@ -1,6 +1,8 @@
 import java.io.ObjectOutputStream;
 import java.util.List;
 
+// TODO - implement game finished
+
 public class GameManagerImpl implements IGameManager {
 
     private List<GameData>  turnsData;
@@ -8,6 +10,7 @@ public class GameManagerImpl implements IGameManager {
     private int         currentTurn;
     private final int   NUM_PLAYERS;
     private ObjectOutputStream[] clients;
+    private int[] scores ;
 
     public GameManagerImpl(int numPlayers , ObjectOutputStream[] clients , List<GameData> turnsData , List<String> turnsDataAnswer){
         this.currentTurn        = 0;
@@ -15,6 +18,11 @@ public class GameManagerImpl implements IGameManager {
         this.NUM_PLAYERS        = numPlayers;
         this.turnsData          = turnsData;
         this.turnsDataAnswer    = turnsDataAnswer;
+
+        scores = new int[NUM_PLAYERS];
+        for (int i = 0; i<NUM_PLAYERS;i++){
+            scores[i] = 0;
+        }
     }
 
     @Override
@@ -26,9 +34,9 @@ public class GameManagerImpl implements IGameManager {
 
     @Override
     public void turnFinished() {
-        System.out.println("client " + currentTurn%NUM_PLAYERS +"  finished his turn, sending all clients update");
+        System.out.println("client" + currentTurn%NUM_PLAYERS +" finished his turn");
         GameData update = getUpdate();
-        connectionUtils.sendAllClients(clients,update);
+        ConnectionUtils.sendAllClients(clients,update);
         currentTurn +=1;
         nextTurn();
     }
@@ -39,25 +47,35 @@ public class GameManagerImpl implements IGameManager {
     }
 
     @Override
-    public GameData getTurnData() {
+    public GameData getTurnGameData() {
         return turnsData.get(currentTurn);
     }
 
     @Override
-    public String getTurnDataAnswer() {
+    public String getTurnGameDataAnswer() {
         return turnsDataAnswer.get(currentTurn);
+    }
+
+    @Override
+    public void updateScore(int clientID, int turnScore) {
+        scores[clientID] += turnScore;
     }
 
     private void nextTurn(){
         int nextClientId = currentTurn%NUM_PLAYERS;
-        GameData currTurnData = getTurnData();
-        connectionUtils.sendClient(clients[nextClientId],currTurnData);
+        GameData currTurnData = getTurnGameData();
+        ConnectionUtils.sendClient(clients[nextClientId],currTurnData);
         System.out.println("sent client " + nextClientId +":" + currTurnData);
     }
 
+
+    // collect all users scores and place them in GameData
     private GameData getUpdate() {
-        // collect all users scores and place them in GameData
-        return new GameData(GameData.DataType.UPDATE,"Update - all users scores");
+        String scoresSummary = "";          // TODO - replace with StringBuilder
+        for (int i = 0;i<scores.length;i++){
+            scoresSummary += String.format("player%d:%d  ",i,scores[i]);
+        }
+        return new GameData(GameData.DataType.UPDATE,"game status " + scoresSummary);
     }
 
 }
