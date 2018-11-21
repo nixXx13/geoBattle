@@ -6,7 +6,6 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
-
 // TODO - implement private and public rooms - generalization of loop in main
 
 public class Main {
