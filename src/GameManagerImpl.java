@@ -1,3 +1,4 @@
+import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.List;
 
@@ -64,7 +65,12 @@ public class GameManagerImpl implements IGameManager {
     private void nextTurn(){
         int nextClientId = currentTurn%NUM_PLAYERS;
         GameData currTurnData = getTurnGameData();
-        ConnectionUtils.sendClient(clients[nextClientId],currTurnData);
+        try {
+            ConnectionUtils.sendClient(clients[nextClientId],currTurnData);
+        } catch (IOException e) {
+            e.printStackTrace();
+            // TODO - should fix new players indexes
+        }
         System.out.println("sent client " + nextClientId +":" + currTurnData);
     }
 
@@ -75,7 +81,9 @@ public class GameManagerImpl implements IGameManager {
         for (int i = 0;i<scores.length;i++){
             scoresSummary += String.format("player%d:%d  ",i,scores[i]);
         }
-        return new GameData(GameData.DataType.UPDATE,"game status " + scoresSummary);
+        GameData updateGameData = new GameData(GameData.DataType.UPDATE);
+        updateGameData.setContent("update", scoresSummary);
+        return updateGameData;
     }
 
 }

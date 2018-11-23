@@ -2,27 +2,26 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import com.google.gson.Gson;
 
-// TODO - improve exception handling
-// client exits unexpectedly
+import com.google.gson.Gson;
 
 class ConnectionUtils {
 
-    static void sendClient(ObjectOutputStream os, GameData gameData){
+    static void sendClient(ObjectOutputStream os, GameData gameData) throws IOException {
         Gson gson = new Gson();
         String s = gson.toJson(gameData);
-        try {
-            os.writeObject(s);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        os.writeObject(s);
     }
 
     static void sendAllClients(ObjectOutputStream[] clients, GameData s) {
         System.out.println("sendAllClients:sending " + s);
         for (ObjectOutputStream os : clients) {
-            sendClient(os, s);
+            try{
+                sendClient(os, s);
+            }catch (IOException e){
+                e.printStackTrace();
+                // TODO - Handle update failing - owner of thread should handle the connection
+            }
         }
     }
 
@@ -34,15 +33,12 @@ class ConnectionUtils {
         }
     }
 
-    public static GameData readClient(ObjectInputStream is) {
+    public static GameData readClient(ObjectInputStream is) throws IOException {
         GameData m = null;
         Gson gson = new Gson();
         try {
             String s = (String) is.readObject();
             m = gson.fromJson(s,GameData.class);
-
-        } catch (IOException e) {
-            e.printStackTrace();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
