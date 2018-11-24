@@ -83,10 +83,9 @@ public class GameManagerImpl implements IGameManager {
             System.out.println("sent client '" + clients.get(0).getId() +"':" + currTurnData);
         } catch (IOException e) {
             // TODO 1- check if player is the only one left
-            // TODO 2- check if any GameData is left
             e.printStackTrace();
             System.out.println("Client '" + clients.get(0).getId() +"' doesnt response.client removed.");
-            // TODO 3- get client to properly close is,os and socket
+            // TODO 2- get client to properly close is,os and socket
             clientsOs.remove(0);
             clients.remove(0);
 
