@@ -11,7 +11,6 @@ class ServerWorker implements Runnable{
     private int id;
     private IGameManager gameManager;
 
-
     public ServerWorker(Socket socket , int id , ObjectInputStream is , ObjectOutputStream os , IGameManager gameManager) {
         this.id = id;
         this.socket = socket;
@@ -27,38 +26,47 @@ class ServerWorker implements Runnable{
             GameData clientResponse = ConnectionUtils.readClient(is);
 
             while (clientResponse != null) {
-                if (gameManager.isClientTurn(id)) {
-                    if (clientResponse.getType() == GameData.DataType.ANSWER) {
+                GameData.DataType type = clientResponse.getType();
 
-                        //calc score of this turn
-                        String turnCorrectAnswer = gameManager.getTurnGameDataAnswer();
-                        String clientAnswer = clientResponse.getContent("answer");
+                if (type == GameData.DataType.FIN){
+                    System.out.println("Game finished.client" + id + " exited properly");
+                    break;
+                }
+                if (type == GameData.DataType.ANSWER) {
 
-                        int turnScore = calculateScore(clientAnswer, turnCorrectAnswer);
-                        gameManager.updateScore(id, turnScore);
-                        System.out.println("client" + id + " answered: " + clientAnswer + "(correct answer '" + turnCorrectAnswer + "' )");
+                    //calc score of this turn
+                    String turnCorrectAnswer = gameManager.getTurnGameDataAnswer();
+                    String clientAnswer = clientResponse.getContent("answer");
 
-                        // sending client response with correct answer
-                        GameData correctAnswer = new GameData(GameData.DataType.ANSWER);
-                        correctAnswer.setContent("answer" , turnCorrectAnswer);
-                        ConnectionUtils.sendClient(os, correctAnswer);
-                        System.out.println("client" + id + " this turn score: " + turnScore);
-                    }
+                    int turnScore = calculateScore(clientAnswer, turnCorrectAnswer);
+                    gameManager.updateScore(id, turnScore);
+                    System.out.println("client" + id + " answered: " + clientAnswer + "(correct answer '" + turnCorrectAnswer + "' )");
+
+                    // sending client response with correct answer
+                    GameData correctAnswer = new GameData(GameData.DataType.ANSWER);
+                    correctAnswer.setContent("answer", turnCorrectAnswer);
+                    ConnectionUtils.sendClient(os, correctAnswer);
+                    System.out.println("client" + id + " this turn score: " + turnScore);
+//                    }
                     gameManager.turnFinished();
                 }
                 clientResponse = ConnectionUtils.readClient(is);
             }
         }catch (IOException se){
-
+            // TODO - do something here!
         }
+        // TODO - close is,os and socket properly
         ConnectionUtils.closeClient(socket);
     }
-
 
     private int calculateScore(String clientAnswer, String correctAnswer){
         if (clientAnswer.equals(correctAnswer)){
             return 1;
         }
         return 0;
+    }
+
+    public int getId() {
+        return id;
     }
 }

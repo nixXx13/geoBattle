@@ -1,7 +1,9 @@
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.PrintStream;
 import java.net.Socket;
+import java.util.List;
 
 import com.google.gson.Gson;
 
@@ -11,16 +13,22 @@ class ConnectionUtils {
         Gson gson = new Gson();
         String s = gson.toJson(gameData);
         os.writeObject(s);
+
+        PrintStream ps = new PrintStream(os);
+        if (ps.checkError()){
+            throw new IOException("Error sending client with objectStream " + os.toString());
+        }
     }
 
-    static void sendAllClients(ObjectOutputStream[] clients, GameData s) {
+    // sendAllClients is used for updates hence it doesnt throw any exceptions.
+    // issues of client connection are handled in dedicated thread of client
+    static void sendAllClients(List<ObjectOutputStream> clients, GameData s) {
         System.out.println("sendAllClients:sending " + s);
         for (ObjectOutputStream os : clients) {
             try{
                 sendClient(os, s);
             }catch (IOException e){
                 e.printStackTrace();
-                // TODO - Handle update failing - owner of thread should handle the connection
             }
         }
     }
