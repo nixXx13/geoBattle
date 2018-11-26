@@ -86,6 +86,7 @@ public class GameManagerImpl implements IGameManager {
             e.printStackTrace();
             System.out.println("Client '" + clients.get(0).getId() +"' doesnt response.client removed.");
             // TODO 2- get client to properly close is,os and socket
+            // TODO 3 - if last client exits , server is stuck listening to client that exited
             clientsOs.remove(0);
             clients.remove(0);
 
