@@ -21,8 +21,8 @@ public class Main {
             // setting up variables needed for game
             List<ServerWorker> serverWorkers = new ArrayList<>();
             List<ObjectOutputStream> osAll = new ArrayList<>();
-            List<GameData> data = new ArrayList();
-            List<String> answers = new ArrayList();
+            List<GameData> data = new ArrayList<>();
+            List<String> answers = new ArrayList<>();
             getData(data, answers);
             IGameManager gameManager = new GameManagerImpl(NUM_PLAYERS, osAll,serverWorkers, data, answers);
 
@@ -59,8 +59,10 @@ public class Main {
         for(int i = 0 ; i<10 ; i++) {
             GameData questionGameData = new GameData(GameData.DataType.QUESTION);
             questionGameData.setContent("question", "1+"+i);
-            questionGameData.setContent("pAnswer1", "" +(i+1));
-            questionGameData.setContent("pAnswer2", ""+i);
+            questionGameData.setContent("pAnswer0", ""+i);
+            questionGameData.setContent("pAnswer1", ""+(i+1));
+            questionGameData.setContent("pAnswer2", "" +(i+2));
+            questionGameData.setContent("pAnswer3", "" +(i+3));
             data.add(questionGameData);
             answers.add(String.valueOf(i+1));
         }

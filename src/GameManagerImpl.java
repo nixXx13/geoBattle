@@ -4,8 +4,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-// TODO - implement game finished
-
 public class GameManagerImpl implements IGameManager {
 
     private List<GameData>              turnsData;
@@ -111,7 +109,7 @@ public class GameManagerImpl implements IGameManager {
     private String getScoreSummary(){
         String scoresSummary = "";          // TODO - replace with StringBuilder
         for (Map.Entry<String,Integer> sc : scores.entrySet()){
-            scoresSummary += String.format("player%s:%d  ",sc.getKey(),sc.getValue());
+            scoresSummary += String.format("player%s:%d ",sc.getKey(),sc.getValue());
         }
         return scoresSummary;
     }

@@ -11,7 +11,7 @@ class ServerWorker implements Runnable{
     private int id;
     private IGameManager gameManager;
 
-    public ServerWorker(Socket socket , int id , ObjectInputStream is , ObjectOutputStream os , IGameManager gameManager) {
+    ServerWorker(Socket socket, int id, ObjectInputStream is, ObjectOutputStream os, IGameManager gameManager) {
         this.id = id;
         this.socket = socket;
         this.gameManager = gameManager;
@@ -55,8 +55,10 @@ class ServerWorker implements Runnable{
         }catch (IOException se){
             // TODO - do something here!
         }
-        // TODO - close is,os and socket properly
-        ConnectionUtils.closeClient(socket);
+        finally {
+            // TODO - close is,os and socket properly
+            ConnectionUtils.closeClient(socket);
+        }
     }
 
     private int calculateScore(String clientAnswer, String correctAnswer){
@@ -66,7 +68,7 @@ class ServerWorker implements Runnable{
         return 0;
     }
 
-    public int getId() {
+    int getId() {
         return id;
     }
 }
