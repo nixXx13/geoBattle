@@ -87,6 +87,9 @@ public class GameManagerImpl implements IGameManager {
             // TODO 3 - if last client exits , server is stuck listening to client that exited
             clientsOs.remove(0);
             clients.remove(0);
+            GameData update = new GameData(GameData.DataType.UPDATE);
+            update.setContent("update" , "Client '" + clients.get(0).getId() +"' disconnected" );
+            ConnectionUtils.sendAllClients(clientsOs, update);
 
             nextTurn();
         }
@@ -96,7 +99,7 @@ public class GameManagerImpl implements IGameManager {
     private GameData collectUpdateStatus() {
 
         GameData updateGameData = new GameData(GameData.DataType.UPDATE);
-        updateGameData.setContent("update", getScoreSummary());
+        updateGameData.setContent("scores", getScoreSummary());
         return updateGameData;
     }
 
