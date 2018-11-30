@@ -9,7 +9,8 @@ public class GameData implements java.io.Serializable{
         QUESTION,
         ANSWER,
         UPDATE,
-        SKIP
+        SKIP,
+        FIN
     }
     public GameData(DataType type){
         this.type = type;

@@ -4,8 +4,6 @@ public interface IGameManager {
 
     public void turnFinished();
 
-    public boolean isClientTurn(int clientId);
-
     public GameData getTurnGameData();
 
     public String getTurnGameDataAnswer();
