@@ -37,7 +37,7 @@ public class Main {
 
                 } catch (IOException e) {
                     e.printStackTrace();
-                    ConnectionUtils.closeClient(socket);
+                    ConnectionUtils.closeSocket(socket);
                     i--;
                 }
             }
@@ -55,7 +55,7 @@ public class Main {
     /*
     TODO - Fetch data from DB
      */
-    private static void getData(List data,List answers) {
+    private static void getData(List<GameData> data,List<String> answers) {
         for(int i = 0 ; i<10 ; i++) {
             GameData questionGameData = new GameData(GameData.DataType.QUESTION);
             questionGameData.setContent("question", "1+"+i);

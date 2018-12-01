@@ -15,7 +15,7 @@ public class GameManagerImpl implements IGameManager {
 
     private int allPlayersReady;
 
-    public GameManagerImpl(int numPlayers , List<ObjectOutputStream> clientsOs , List<ServerWorker> clients , List<GameData> turnsData , List<String> turnsDataAnswer){
+    GameManagerImpl(int numPlayers, List<ObjectOutputStream> clientsOs, List<ServerWorker> clients, List<GameData> turnsData, List<String> turnsDataAnswer){
         this.clientsOs          = clientsOs;
         this.clients            = clients;
         this.NUM_PLAYERS        = numPlayers;
@@ -39,21 +39,19 @@ public class GameManagerImpl implements IGameManager {
     @Override
     public void turnFinished() {
 
-        System.out.println("client" + clients.get(0).getId() +" finished his turn");
+        // Sending all clients scores update
+        System.out.println("GameManagerImpl,turnFinished: client" + clients.get(0).getId() +" finished his turn");
         GameData update = collectUpdateStatus();
-        ConnectionUtils.sendAllClients(clientsOs,update);
+        sendAllClients(update);
 
-        // preparing data for next turn
+        // pushing client that finished turn to end of queue
         pushFirstToLast(clientsOs);
         pushFirstToLast(clients);
+
+        // TODO - refactor - turnsData should be separated for each player
+        // removing question from question queue
         turnsData.remove(0);
         turnsDataAnswer.remove(0);
-
-        if (turnsData.isEmpty()){
-            GameData summary = collectSummary();
-            ConnectionUtils.sendAllClients(clientsOs,summary);
-            return;
-        }
 
         nextTurn();
     }
@@ -69,30 +67,66 @@ public class GameManagerImpl implements IGameManager {
     }
 
     @Override
+    public void notifyClientExit(int id) {
+        if (clients.get(0).getId()==id){
+            // client exited during his turn, removing it and initiating next turn
+            System.out.println( "GameManagerImpl,notifyClientExit: client '" + id +"' exited during own turn, removing client");
+            removeCurrentClient();
+
+            // TODO - refactor - turnsData should be separated for each player
+            if (!turnsData.isEmpty()) {
+                turnsData.remove(0);
+                turnsDataAnswer.remove(0);
+            }
+            nextTurn();
+        }
+    }
+
+    @Override
     public void updateScore(int clientID, int turnScore) {
         int oldScore = scores.get(String.valueOf(clientID));
         scores.put(String.valueOf(clientID),oldScore+turnScore);
     }
 
     private void nextTurn(){
+
+        //checking if there is a next turn -
+        // game ended? any questions left?
+        if (turnsData.isEmpty()){
+            GameData summary = collectSummary();
+            sendAllClients(summary);
+            return;
+        }
+        // any clients left?
+        if (clients.size() == 0){
+            return;
+        }
+
+        // next turn is available
         GameData currTurnData = getTurnGameData();
         try {
-            ConnectionUtils.sendClient(clientsOs.get(0),currTurnData);
-            System.out.println("sent client '" + clients.get(0).getId() +"':" + currTurnData);
+            clients.get(0).sendClient(currTurnData);
+            System.out.println("GameManagerImpl,nextTurn: sent client '" + clients.get(0).getId() +"':" + currTurnData);
         } catch (IOException e) {
-            // TODO 1- check if player is the only one left
+            // TODO 1- bug / feature - check if player is the only one left
             e.printStackTrace();
-            System.out.println("Client '" + clients.get(0).getId() +"' doesnt response.client removed.");
-            // TODO 2- get client to properly close is,os and socket
-            // TODO 3 - if last client exits , server is stuck listening to client that exited
-            clientsOs.remove(0);
-            clients.remove(0);
-            GameData update = new GameData(GameData.DataType.UPDATE);
-            update.setContent("update" , "Client '" + clients.get(0).getId() +"' disconnected" );
-            ConnectionUtils.sendAllClients(clientsOs, update);
+            System.out.println("GameManagerImpl,nextTurn: client '" + clients.get(0).getId() +"' doesnt response.client removed.");
+            clients.get(0).terminate(); // force os,is,socket close
+            removeCurrentClient();
 
             nextTurn();
         }
+    }
+
+    private void removeCurrentClient(){
+        int clientName = clients.get(0).getId();
+        clientsOs.remove(0);
+        clients.remove(0);
+
+        // TODO - is this update should be here
+        GameData update = new GameData(GameData.DataType.UPDATE);
+        update.setContent("update" , "Client '" + clientName +"' disconnected" );
+        sendAllClients(update);
     }
 
     // collect all users scores and place them in GameData
@@ -123,4 +157,18 @@ public class GameManagerImpl implements IGameManager {
         l.add(obj);
     }
 
+    private void sendAllClients(GameData s) {
+        // sendAllClients is used for updates hence it doesnt throw any exceptions.
+        // issues of client connection are handled in dedicated thread of client
+        System.out.println("GameManagerImpl,sendAllClients: sending " + s);
+        String json = ConnectionUtils.gameDataToJson(s);
+        for (ObjectOutputStream os : clientsOs) {
+            try{
+                ConnectionUtils.sendObjectOutputStream(os, json);
+            }catch (IOException e){
+                // if send fails it will be handled and closed later
+                //e.printStackTrace();
+            }
+        }
+    }
 }

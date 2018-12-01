@@ -12,24 +12,31 @@ class ServerWorker implements Runnable{
     private IGameManager gameManager;
 
     ServerWorker(Socket socket, int id, ObjectInputStream is, ObjectOutputStream os, IGameManager gameManager) {
-        this.id = id;
-        this.socket = socket;
-        this.gameManager = gameManager;
-        this.is = is;
-        this.os = os;
+        this.gameManager    = gameManager;
+        this.id             = id;
+        this.socket         = socket;
+        this.is             = is;
+        this.os             = os;
     }
 
     @Override
     public void run() {
         try {
             gameManager.initGame(id);
-            GameData clientResponse = ConnectionUtils.readClient(is);
+            GameData clientResponse = readClient();
 
             while (clientResponse != null) {
                 GameData.DataType type = clientResponse.getType();
 
                 if (type == GameData.DataType.FIN){
-                    System.out.println("Game finished.client" + id + " exited properly");
+                    String reason = clientResponse.getContent("reason");
+                    if (reason != null && reason.equals("game finished")){
+                        System.out.println("ServerWorker,run: client "+ id + " exited properly");
+                    }
+                    else{
+                        // Client initiated exit, notifying gameManager of client exit
+                        gameManager.notifyClientExit(id);
+                    }
                     break;
                 }
                 if (type == GameData.DataType.ANSWER) {
@@ -37,27 +44,25 @@ class ServerWorker implements Runnable{
                     //calc score of this turn
                     String turnCorrectAnswer = gameManager.getTurnGameDataAnswer();
                     String clientAnswer = clientResponse.getContent("answer");
-
                     int turnScore = calculateScore(clientAnswer, turnCorrectAnswer);
                     gameManager.updateScore(id, turnScore);
-                    System.out.println("client" + id + " answered: " + clientAnswer + "(correct answer '" + turnCorrectAnswer + "' )");
+                    System.out.println("ServerWorker,run: client" + id + " answered: " + clientAnswer + "(correct answer '" + turnCorrectAnswer + "' )");
 
                     // sending client response with correct answer
                     GameData correctAnswer = new GameData(GameData.DataType.ANSWER);
                     correctAnswer.setContent("answer", turnCorrectAnswer);
-                    ConnectionUtils.sendClient(os, correctAnswer);
-                    System.out.println("client" + id + " this turn score: " + turnScore);
-//                    }
+                    sendClient(correctAnswer);
+                    System.out.println("ServerWorker,run: client" + id + " this turn score: " + turnScore);
                     gameManager.turnFinished();
                 }
-                clientResponse = ConnectionUtils.readClient(is);
+                clientResponse = readClient();
             }
         }catch (IOException se){
-            // TODO - do something here!
+            System.out.println("ServerWorker,run: error in main loop - terminating");
+            gameManager.notifyClientExit(id);
         }
         finally {
-            // TODO - close is,os and socket properly
-            ConnectionUtils.closeClient(socket);
+            terminate();
         }
     }
 
@@ -68,7 +73,32 @@ class ServerWorker implements Runnable{
         return 0;
     }
 
+    void terminate(){
+        System.out.println("ServerWorker,terminate: trying to close output stream of client " + id);
+        ConnectionUtils.closeStream(os);
+        System.out.println("ServerWorker,terminate: trying to close input stream of client " + id);
+        ConnectionUtils.closeStream(is);
+        System.out.println("ServerWorker,terminate: trying to close socket of client " + id);
+        ConnectionUtils.closeSocket(socket);
+    }
+
     int getId() {
         return id;
+    }
+
+    void sendClient(GameData gameData) throws IOException {
+        String s = ConnectionUtils.gameDataToJson(gameData);
+        ConnectionUtils.sendObjectOutputStream(os,s);
+    }
+
+    private GameData readClient() throws IOException {
+        GameData m;
+        String input = ConnectionUtils.readObjectInputStream(is);
+        if (input!=null) {
+            m = ConnectionUtils.jsonToGameData(input);
+        }else{
+            throw new IOException("ServerWorker,readClient: received null from client");
+        }
+        return m;
     }
 }

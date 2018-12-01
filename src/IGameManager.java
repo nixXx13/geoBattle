@@ -1,12 +1,14 @@
 public interface IGameManager {
 
-    public void initGame( int clientId);
+    void initGame( int clientId);
 
-    public void turnFinished();
+    void turnFinished();
 
-    public GameData getTurnGameData();
+    GameData getTurnGameData();
 
-    public String getTurnGameDataAnswer();
+    String getTurnGameDataAnswer();
+
+    void notifyClientExit(int id);
 
     void updateScore(int clientID ,int turnScore);
 }

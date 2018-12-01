@@ -1,17 +1,12 @@
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.PrintStream;
+import java.io.*;
 import java.net.Socket;
-import java.util.List;
 
 import com.google.gson.Gson;
 
 class ConnectionUtils {
 
-    static void sendClient(ObjectOutputStream os, GameData gameData) throws IOException {
-        Gson gson = new Gson();
-        String s = gson.toJson(gameData);
+
+    static void sendObjectOutputStream(ObjectOutputStream os, String s) throws IOException {
         os.writeObject(s);
 
         PrintStream ps = new PrintStream(os);
@@ -20,20 +15,25 @@ class ConnectionUtils {
         }
     }
 
-    // sendAllClients is used for updates hence it doesnt throw any exceptions.
-    // issues of client connection are handled in dedicated thread of client
-    static void sendAllClients(List<ObjectOutputStream> clients, GameData s) {
-        System.out.println("sendAllClients:sending " + s);
-        for (ObjectOutputStream os : clients) {
-            try{
-                sendClient(os, s);
-            }catch (IOException e){
-                e.printStackTrace();
-            }
+    static String readObjectInputStream(ObjectInputStream is) throws IOException {
+        String s = null;
+        try {
+            s = (String) is.readObject();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        return s;
+    }
+
+    static void closeStream(Closeable s ){
+        try {
+            s.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
-    static void closeClient(Socket socket){
+    static void closeSocket(Socket socket){
         try {
             socket.close();
         } catch (IOException e) {
@@ -41,15 +41,13 @@ class ConnectionUtils {
         }
     }
 
-    public static GameData readClient(ObjectInputStream is) throws IOException {
-        GameData m = null;
+    static String gameDataToJson(GameData gameData){
         Gson gson = new Gson();
-        try {
-            String s = (String) is.readObject();
-            m = gson.fromJson(s,GameData.class);
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-        return m;
+        return gson.toJson(gameData);
+    }
+
+    static GameData jsonToGameData(String json){
+        Gson gson = new Gson();
+        return gson.fromJson(json, GameData.class);
     }
 }
