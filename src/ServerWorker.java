@@ -44,18 +44,19 @@ class ServerWorker implements Runnable{
                 }
                 if (type == GameData.DataType.ANSWER) {
 
+                    // TODO - BUG - creating room and exiting before all clients joined
                     //calc score of this turn
                     String turnCorrectAnswer = gameManager.getTurnGameDataAnswer();
                     String clientAnswer = clientResponse.getContent("answer");
                     int turnScore = calculateScore(clientAnswer, turnCorrectAnswer);
                     gameManager.updateScore(clientName, turnScore);
-                    System.out.println(roomName + ":ServerWorker,run: client" + clientName + " answered: " + clientAnswer + "(correct answer '" + turnCorrectAnswer + "' )");
 
                     // sending client response with correct answer
                     GameData correctAnswer = new GameData(GameData.DataType.ANSWER);
                     correctAnswer.setContent("answer", turnCorrectAnswer);
                     sendClient(correctAnswer);
-                    System.out.println(roomName + ":ServerWorker,run: client" + clientName + " this turn score: " + turnScore);
+                    System.out.println(roomName + ":ServerWorker,run: client" + clientName + " answered: " + clientAnswer + "(correct answer '" + turnCorrectAnswer + "' )" + ".this turn score: " + turnScore);
+
                     gameManager.turnFinished();
                 }
                 clientResponse = readClient();
@@ -77,11 +78,9 @@ class ServerWorker implements Runnable{
     }
 
     void terminate(){
-        System.out.println(roomName + ":ServerWorker,terminate: trying to close output stream of client " + clientName);
+        System.out.println(roomName + ":ServerWorker,terminate: trying to close output/input streams and socket of client " + clientName);
         ConnectionUtils.closeStream(os);
-        System.out.println(roomName + ":ServerWorker,terminate: trying to close input stream of client " + clientName);
         ConnectionUtils.closeStream(is);
-        System.out.println(roomName + ":ServerWorker,terminate: trying to close socket of client " + clientName);
         ConnectionUtils.closeSocket(socket);
     }
 
