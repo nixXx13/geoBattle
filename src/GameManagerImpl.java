@@ -38,7 +38,7 @@ public class GameManagerImpl implements IGameManager {
         playersReady +=1;
         if ( playersReady == NUM_PLAYERS ){
             GameData init = new GameData(GameData.DataType.UPDATE);
-            init.setContent("settings:roomSize",String.valueOf(NUM_PLAYERS));
+            init.setContent("settings:playersName",getClientsNames());
             sendAllClients(init);
             nextTurn();
         }
@@ -200,6 +200,13 @@ public class GameManagerImpl implements IGameManager {
         }
     }
 
-
+    private String getClientsNames(){
+        // return names in format "name1:name2:..."
+        String names = "";
+        for (ServerWorker c : clients){
+            names += ":" + c.getId();
+        }
+        return names.substring(1);
+    }
 
 }
