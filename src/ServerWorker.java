@@ -8,12 +8,14 @@ class ServerWorker implements Runnable{
     private ObjectInputStream is;
     private ObjectOutputStream os;
     private Socket socket;
-    private int id;
+    private String clientName;
+    private String roomName;
     private IGameManager gameManager;
 
-    ServerWorker(Socket socket, int id, ObjectInputStream is, ObjectOutputStream os, IGameManager gameManager) {
+    ServerWorker(Socket socket, String clientName, ObjectInputStream is, ObjectOutputStream os, IGameManager gameManager , String roomName) {
         this.gameManager    = gameManager;
-        this.id             = id;
+        this.clientName     = clientName;
+        this.roomName       = roomName;
         this.socket         = socket;
         this.is             = is;
         this.os             = os;
@@ -22,7 +24,7 @@ class ServerWorker implements Runnable{
     @Override
     public void run() {
         try {
-            gameManager.initGame(id);
+            gameManager.initGame(clientName);
             GameData clientResponse = readClient();
 
             while (clientResponse != null) {
@@ -31,11 +33,12 @@ class ServerWorker implements Runnable{
                 if (type == GameData.DataType.FIN){
                     String reason = clientResponse.getContent("reason");
                     if (reason != null && reason.equals("game finished")){
-                        System.out.println("ServerWorker,run: client "+ id + " exited properly");
+                        // Game ended as expected
+                        System.out.println(roomName + ":ServerWorker,run: client "+ clientName + " exited properly");
                     }
                     else{
                         // Client initiated exit, notifying gameManager of client exit
-                        gameManager.notifyClientExit(id);
+                        gameManager.clientExit(clientName);
                     }
                     break;
                 }
@@ -45,21 +48,21 @@ class ServerWorker implements Runnable{
                     String turnCorrectAnswer = gameManager.getTurnGameDataAnswer();
                     String clientAnswer = clientResponse.getContent("answer");
                     int turnScore = calculateScore(clientAnswer, turnCorrectAnswer);
-                    gameManager.updateScore(id, turnScore);
-                    System.out.println("ServerWorker,run: client" + id + " answered: " + clientAnswer + "(correct answer '" + turnCorrectAnswer + "' )");
+                    gameManager.updateScore(clientName, turnScore);
+                    System.out.println(roomName + ":ServerWorker,run: client" + clientName + " answered: " + clientAnswer + "(correct answer '" + turnCorrectAnswer + "' )");
 
                     // sending client response with correct answer
                     GameData correctAnswer = new GameData(GameData.DataType.ANSWER);
                     correctAnswer.setContent("answer", turnCorrectAnswer);
                     sendClient(correctAnswer);
-                    System.out.println("ServerWorker,run: client" + id + " this turn score: " + turnScore);
+                    System.out.println(roomName + ":ServerWorker,run: client" + clientName + " this turn score: " + turnScore);
                     gameManager.turnFinished();
                 }
                 clientResponse = readClient();
             }
         }catch (IOException se){
-            System.out.println("ServerWorker,run: error in main loop - terminating");
-            gameManager.notifyClientExit(id);
+            System.out.println(roomName + ":ServerWorker,run: error in main loop - terminating");
+            gameManager.clientExit(clientName);
         }
         finally {
             terminate();
@@ -74,16 +77,16 @@ class ServerWorker implements Runnable{
     }
 
     void terminate(){
-        System.out.println("ServerWorker,terminate: trying to close output stream of client " + id);
+        System.out.println(roomName + ":ServerWorker,terminate: trying to close output stream of client " + clientName);
         ConnectionUtils.closeStream(os);
-        System.out.println("ServerWorker,terminate: trying to close input stream of client " + id);
+        System.out.println(roomName + ":ServerWorker,terminate: trying to close input stream of client " + clientName);
         ConnectionUtils.closeStream(is);
-        System.out.println("ServerWorker,terminate: trying to close socket of client " + id);
+        System.out.println(roomName + ":ServerWorker,terminate: trying to close socket of client " + clientName);
         ConnectionUtils.closeSocket(socket);
     }
 
-    int getId() {
-        return id;
+    String getId() {
+        return clientName;
     }
 
     void sendClient(GameData gameData) throws IOException {
@@ -97,7 +100,7 @@ class ServerWorker implements Runnable{
         if (input!=null) {
             m = ConnectionUtils.jsonToGameData(input);
         }else{
-            throw new IOException("ServerWorker,readClient: received null from client");
+            throw new IOException(roomName + ":ServerWorker,readClient: received null from client");
         }
         return m;
     }

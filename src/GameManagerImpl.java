@@ -9,29 +9,32 @@ public class GameManagerImpl implements IGameManager {
     private List<GameData>              turnsData;
     private List<String>                turnsDataAnswer;
     private final int                   NUM_PLAYERS;
+    private int                         playersJoined;
+    private int                         playersReady;
+    private String                      roomName;
     private List<ObjectOutputStream>    clientsOs;
     private List<ServerWorker>          clients;
     private HashMap<String,Integer>     scores ;
 
-    private int allPlayersReady;
-
-    GameManagerImpl(int numPlayers, List<ObjectOutputStream> clientsOs, List<ServerWorker> clients, List<GameData> turnsData, List<String> turnsDataAnswer){
+    GameManagerImpl(String roomName , int numPlayers, List<ObjectOutputStream> clientsOs, List<ServerWorker> clients, List<GameData> turnsData, List<String> turnsDataAnswer){
         this.clientsOs          = clientsOs;
         this.clients            = clients;
         this.NUM_PLAYERS        = numPlayers;
         this.turnsData          = turnsData;
         this.turnsDataAnswer    = turnsDataAnswer;
-        this.allPlayersReady    = 0;
+        this.roomName           = roomName;
+        this.playersReady    = 0;
+        this.playersJoined   = 0;
         scores = new HashMap<>();
     }
 
     @Override
-    public void initGame(int clientId) {
+    public void initGame(String clientName) {
         //init user score
-        scores.put(String.valueOf(clientId),0);
+        scores.put(clientName,0);
 
-        allPlayersReady +=1;
-        if ( allPlayersReady == NUM_PLAYERS ){
+        playersReady +=1;
+        if ( playersReady == NUM_PLAYERS ){
             nextTurn();
         }
     }
@@ -40,7 +43,7 @@ public class GameManagerImpl implements IGameManager {
     public void turnFinished() {
 
         // Sending all clients scores update
-        System.out.println("GameManagerImpl,turnFinished: client" + clients.get(0).getId() +" finished his turn");
+        System.out.println(roomName + ":GameManagerImpl,turnFinished: client" + clients.get(0).getId() +" finished his turn");
         GameData update = collectUpdateStatus();
         sendAllClients(update);
 
@@ -67,10 +70,10 @@ public class GameManagerImpl implements IGameManager {
     }
 
     @Override
-    public void notifyClientExit(int id) {
-        if (clients.get(0).getId()==id){
+    public void clientExit(String id) {
+        if (clients.get(0).getId().equals(id)){
             // client exited during his turn, removing it and initiating next turn
-            System.out.println( "GameManagerImpl,notifyClientExit: client '" + id +"' exited during own turn, removing client");
+            System.out.println( roomName + ":GameManagerImpl,notifyClientExit: client '" + id +"' exited during own turn, removing client");
             removeCurrentClient();
 
             // TODO - refactor - turnsData should be separated for each player
@@ -83,9 +86,9 @@ public class GameManagerImpl implements IGameManager {
     }
 
     @Override
-    public void updateScore(int clientID, int turnScore) {
-        int oldScore = scores.get(String.valueOf(clientID));
-        scores.put(String.valueOf(clientID),oldScore+turnScore);
+    public void updateScore(String clientID, int turnScore) {
+        int oldScore = scores.get(clientID);
+        scores.put(clientID,oldScore+turnScore);
     }
 
     private void nextTurn(){
@@ -106,11 +109,11 @@ public class GameManagerImpl implements IGameManager {
         GameData currTurnData = getTurnGameData();
         try {
             clients.get(0).sendClient(currTurnData);
-            System.out.println("GameManagerImpl,nextTurn: sent client '" + clients.get(0).getId() +"':" + currTurnData);
+            System.out.println(roomName + ":GameManagerImpl,nextTurn: sent client '" + clients.get(0).getId() +"':" + currTurnData);
         } catch (IOException e) {
             // TODO 1- bug / feature - check if player is the only one left
             e.printStackTrace();
-            System.out.println("GameManagerImpl,nextTurn: client '" + clients.get(0).getId() +"' doesnt response.client removed.");
+            System.out.println(roomName + ":GameManagerImpl,nextTurn: client '" + clients.get(0).getId() +"' doesnt response.client removed.");
             clients.get(0).terminate(); // force os,is,socket close
             removeCurrentClient();
 
@@ -119,7 +122,7 @@ public class GameManagerImpl implements IGameManager {
     }
 
     private void removeCurrentClient(){
-        int clientName = clients.get(0).getId();
+        String clientName = clients.get(0).getId();
         clientsOs.remove(0);
         clients.remove(0);
 
@@ -146,7 +149,7 @@ public class GameManagerImpl implements IGameManager {
     private String getScoreSummary(){
         String scoresSummary = "";          // TODO - replace with StringBuilder
         for (Map.Entry<String,Integer> sc : scores.entrySet()){
-            scoresSummary += String.format("player%s:%d ",sc.getKey(),sc.getValue());
+            scoresSummary += String.format("%s:%d ",sc.getKey(),sc.getValue());
         }
         return scoresSummary;
     }
@@ -160,7 +163,7 @@ public class GameManagerImpl implements IGameManager {
     private void sendAllClients(GameData s) {
         // sendAllClients is used for updates hence it doesnt throw any exceptions.
         // issues of client connection are handled in dedicated thread of client
-        System.out.println("GameManagerImpl,sendAllClients: sending " + s);
+        System.out.println(roomName + ":GameManagerImpl,sendAllClients: sending " + s);
         String json = ConnectionUtils.gameDataToJson(s);
         for (ObjectOutputStream os : clientsOs) {
             try{
@@ -171,4 +174,20 @@ public class GameManagerImpl implements IGameManager {
             }
         }
     }
+
+    public void clientJoined(ServerWorker serverWorker ,ObjectOutputStream os){
+        clientsOs.add(os);
+        clients.add(serverWorker);
+
+        playersJoined +=1;
+        if ( playersJoined == NUM_PLAYERS){
+            for (int i = 0; i < NUM_PLAYERS; i++) {
+                Thread p = new Thread(clients.get(i));
+                p.start();
+            }
+        }
+    }
+
+    // TODO - remove gameManager when game is finished
+
 }

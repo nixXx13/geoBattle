@@ -1,6 +1,8 @@
+import java.io.ObjectOutputStream;
+
 public interface IGameManager {
 
-    void initGame( int clientId);
+    void initGame( String clientId);
 
     void turnFinished();
 
@@ -8,7 +10,9 @@ public interface IGameManager {
 
     String getTurnGameDataAnswer();
 
-    void notifyClientExit(int id);
+    void clientExit(String id);
 
-    void updateScore(int clientID ,int turnScore);
+    void updateScore(String clientID ,int turnScore);
+
+    void clientJoined(ServerWorker serverWorker , ObjectOutputStream os);
 }
