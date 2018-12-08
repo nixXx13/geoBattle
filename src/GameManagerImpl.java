@@ -37,6 +37,9 @@ public class GameManagerImpl implements IGameManager {
 
         playersReady +=1;
         if ( playersReady == NUM_PLAYERS ){
+            GameData init = new GameData(GameData.DataType.UPDATE);
+            init.setContent("settings:roomSize",String.valueOf(NUM_PLAYERS));
+            sendAllClients(init);
             nextTurn();
         }
     }
