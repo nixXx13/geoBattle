@@ -43,8 +43,6 @@ class ServerWorker implements Runnable{
                     break;
                 }
                 if (type == GameData.DataType.ANSWER) {
-
-                    // TODO - BUG - creating room and exiting before all clients joined
                     //calc score of this turn
                     String turnCorrectAnswer = gameManager.getTurnGameDataAnswer();
                     String clientAnswer = clientResponse.getContent("answer");

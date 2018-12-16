@@ -68,6 +68,7 @@ class MainManager {
                         break;
                     default:
                         System.out.println(name+":unknown initGameData received.");
+                        System.out.println(initGameData.toString());
                         closeAll(is,os,socket);
                         //send packet - no such room
                         break;
