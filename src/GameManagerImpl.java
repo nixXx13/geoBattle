@@ -15,7 +15,7 @@ public class GameManagerImpl implements IGameManager {
     private String                      roomName;
     private List<ObjectOutputStream>    clientsOs;
     private List<ServerWorker>          clients;
-    private HashMap<String,Integer>     scores ;
+    private HashMap<String,Double>     scores ;
 
     GameManagerImpl(MainManager mainManager , String roomName , int numPlayers, List<ObjectOutputStream> clientsOs, List<ServerWorker> clients, List<GameData> turnsData, List<String> turnsDataAnswer){
         this.mainManager        = mainManager;
@@ -33,7 +33,7 @@ public class GameManagerImpl implements IGameManager {
     @Override
     public void initGame(String clientName) {
         //init user score
-        scores.put(clientName,0);
+        scores.put(clientName,0.0);
 
         playersReady +=1;
         if ( playersReady == NUM_PLAYERS ){
@@ -109,8 +109,8 @@ public class GameManagerImpl implements IGameManager {
     }
 
     @Override
-    public void updateScore(String clientID, int turnScore) {
-        int oldScore = scores.get(clientID);
+    public void updateScore(String clientID, double turnScore) {
+        double oldScore = scores.get(clientID);
         scores.put(clientID,oldScore+turnScore);
     }
 
@@ -173,8 +173,9 @@ public class GameManagerImpl implements IGameManager {
 
     private String getScoreSummary(){
         String scoresSummary = "";          // TODO - replace with StringBuilder
-        for (Map.Entry<String,Integer> sc : scores.entrySet()){
-            scoresSummary += String.format("%s:%d ",sc.getKey(),sc.getValue());
+        for (Map.Entry<String,Double> sc : scores.entrySet()){
+            String twoDigitsValue = String.format( "%.1f", sc.getValue() );
+            scoresSummary += String.format("%s:%s ",sc.getKey(),twoDigitsValue);
         }
         return scoresSummary;
     }

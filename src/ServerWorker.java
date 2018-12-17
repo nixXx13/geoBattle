@@ -45,15 +45,14 @@ class ServerWorker implements Runnable{
                 if (type == GameData.DataType.ANSWER) {
                     //calc score of this turn
                     String turnCorrectAnswer = gameManager.getTurnGameDataAnswer();
-                    String clientAnswer = clientResponse.getContent("answer");
-                    int turnScore = calculateScore(clientAnswer, turnCorrectAnswer);
+                    double turnScore = calculateScore(clientResponse, turnCorrectAnswer);
                     gameManager.updateScore(clientName, turnScore);
 
                     // sending client response with correct answer
                     GameData correctAnswer = new GameData(GameData.DataType.ANSWER);
                     correctAnswer.setContent("answer", turnCorrectAnswer);
                     sendClient(correctAnswer);
-                    System.out.println(roomName + ":ServerWorker,run: client" + clientName + " answered: " + clientAnswer + "(correct answer '" + turnCorrectAnswer + "' )" + ".this turn score: " + turnScore);
+                    System.out.println(roomName + ":ServerWorker,run: client" + clientName + " answered: " + clientResponse.getContent("answer") + ":" + clientResponse.getContent("timeCoeffient") +"(correct answer '" + turnCorrectAnswer + "' )" + ".this turn score: " + turnScore);
 
                     gameManager.turnFinished();
                 }
@@ -68,9 +67,11 @@ class ServerWorker implements Runnable{
         }
     }
 
-    private int calculateScore(String clientAnswer, String correctAnswer){
+    private double calculateScore(GameData clientResponse, String correctAnswer){
+        String clientAnswer = clientResponse.getContent("answer");
+        double clientTimeCoefficient = Double.valueOf(clientResponse.getContent("timeCoeffient"));
         if (clientAnswer.equals(correctAnswer)){
-            return 1;
+            return clientTimeCoefficient;
         }
         return 0;
     }

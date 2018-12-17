@@ -12,7 +12,7 @@ public interface IGameManager {
 
     void clientExit(String id);
 
-    void updateScore(String clientID ,int turnScore);
+    void updateScore(String clientID ,double turnScore);
 
     void clientJoined(ServerWorker serverWorker , ObjectOutputStream os);
 }
