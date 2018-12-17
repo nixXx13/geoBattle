@@ -1,12 +1,18 @@
+import java.io.ObjectOutputStream;
+
 public interface IGameManager {
 
-    public void initGame( int clientId);
+    void initGame( String clientId);
 
-    public void turnFinished();
+    void turnFinished();
 
-    public GameData getTurnGameData();
+    GameData getTurnGameData();
 
-    public String getTurnGameDataAnswer();
+    String getTurnGameDataAnswer();
 
-    void updateScore(int clientID ,int turnScore);
+    void clientExit(String id);
+
+    void updateScore(String clientID ,double turnScore);
+
+    void clientJoined(ServerWorker serverWorker , ObjectOutputStream os);
 }

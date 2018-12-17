@@ -6,32 +6,40 @@ import java.util.Map;
 
 public class GameManagerImpl implements IGameManager {
 
+    private MainManager                 mainManager;
     private List<GameData>              turnsData;
     private List<String>                turnsDataAnswer;
     private final int                   NUM_PLAYERS;
+    private int                         playersJoined;
+    private int                         playersReady;
+    private String                      roomName;
     private List<ObjectOutputStream>    clientsOs;
     private List<ServerWorker>          clients;
-    private HashMap<String,Integer>     scores ;
+    private HashMap<String,Double>     scores ;
 
-    private int allPlayersReady;
-
-    public GameManagerImpl(int numPlayers , List<ObjectOutputStream> clientsOs , List<ServerWorker> clients , List<GameData> turnsData , List<String> turnsDataAnswer){
+    GameManagerImpl(MainManager mainManager , String roomName , int numPlayers, List<ObjectOutputStream> clientsOs, List<ServerWorker> clients, List<GameData> turnsData, List<String> turnsDataAnswer){
+        this.mainManager        = mainManager;
         this.clientsOs          = clientsOs;
         this.clients            = clients;
         this.NUM_PLAYERS        = numPlayers;
         this.turnsData          = turnsData;
         this.turnsDataAnswer    = turnsDataAnswer;
-        this.allPlayersReady    = 0;
+        this.roomName           = roomName;
+        this.playersReady    = 0;
+        this.playersJoined   = 0;
         scores = new HashMap<>();
     }
 
     @Override
-    public void initGame(int clientId) {
+    public void initGame(String clientName) {
         //init user score
-        scores.put(String.valueOf(clientId),0);
+        scores.put(clientName,0.0);
 
-        allPlayersReady +=1;
-        if ( allPlayersReady == NUM_PLAYERS ){
+        playersReady +=1;
+        if ( playersReady == NUM_PLAYERS ){
+            GameData init = new GameData(GameData.DataType.UPDATE);
+            init.setContent("settings:playersName",getClientsNames());
+            sendAllClients(init);
             nextTurn();
         }
     }
@@ -39,21 +47,18 @@ public class GameManagerImpl implements IGameManager {
     @Override
     public void turnFinished() {
 
-        System.out.println("client" + clients.get(0).getId() +" finished his turn");
-        GameData update = collectUpdateStatus();
-        ConnectionUtils.sendAllClients(clientsOs,update);
+        // Sending all clients scores update
+        GameData update = getGameStatus();
+        sendAllClients(update);
 
-        // preparing data for next turn
+        // pushing client that finished turn to end of queue
         pushFirstToLast(clientsOs);
         pushFirstToLast(clients);
+
+        // TODO - refactor - turnsData should be separated for each player
+        // removing question from question queue
         turnsData.remove(0);
         turnsDataAnswer.remove(0);
-
-        if (turnsData.isEmpty()){
-            GameData summary = collectSummary();
-            ConnectionUtils.sendAllClients(clientsOs,summary);
-            return;
-        }
 
         nextTurn();
     }
@@ -69,38 +74,98 @@ public class GameManagerImpl implements IGameManager {
     }
 
     @Override
-    public void updateScore(int clientID, int turnScore) {
-        int oldScore = scores.get(String.valueOf(clientID));
-        scores.put(String.valueOf(clientID),oldScore+turnScore);
+    public void clientExit(String id) {
+        if (clients.get(0).getId().equals(id)){
+            // client exited during his turn, removing it and initiating next turn
+            System.out.println( roomName + ":GameManagerImpl,clientExit: client '" + id +"' exited during own turn, removing client");
+            removeCurrentClient();
+
+            // TODO - refactor - turnsData should be separated for each player
+            if (!turnsData.isEmpty()) {
+                turnsData.remove(0);
+                turnsDataAnswer.remove(0);
+            }
+            nextTurn();
+        }
+    }
+
+    @Override
+    public void clientJoined(ServerWorker serverWorker ,ObjectOutputStream os){
+        // updating other players new player joined
+        GameData update = new GameData(GameData.DataType.UPDATE);
+        update.setContent("update" , "Client '" + serverWorker.getId() +"' joined" );
+        sendAllClients(update);
+
+        clientsOs.add(os);
+        clients.add(serverWorker);
+
+        playersJoined +=1;
+        if ( playersJoined == NUM_PLAYERS){
+            for (int i = 0; i < NUM_PLAYERS; i++) {
+                Thread p = new Thread(clients.get(i));
+                p.start();
+            }
+        }
+    }
+
+    @Override
+    public void updateScore(String clientID, double turnScore) {
+        double oldScore = scores.get(clientID);
+        scores.put(clientID,oldScore+turnScore);
     }
 
     private void nextTurn(){
+
+        //checking if there is a next turn -
+        // game ended? any questions left?
+        if (turnsData.isEmpty()){
+            GameData summary = getGameFinishedSummary();
+            sendAllClients(summary);
+            mainManager.removeGameManager(roomName);
+            return;
+        }
+        // any clients left?
+        if (clients.size() == 0){
+            mainManager.removeGameManager(roomName);
+            return;
+        }
+
+        // next turn is available
         GameData currTurnData = getTurnGameData();
         try {
-            ConnectionUtils.sendClient(clientsOs.get(0),currTurnData);
-            System.out.println("sent client '" + clients.get(0).getId() +"':" + currTurnData);
+            clients.get(0).sendClient(currTurnData);
+            System.out.println(roomName + ":GameManagerImpl,nextTurn: sent client '" + clients.get(0).getId() +"':" + currTurnData);
         } catch (IOException e) {
-            // TODO 1- check if player is the only one left
+            // TODO 1- bug / feature - check if player is the only one left
             e.printStackTrace();
-            System.out.println("Client '" + clients.get(0).getId() +"' doesnt response.client removed.");
-            // TODO 2- get client to properly close is,os and socket
-            // TODO 3 - if last client exits , server is stuck listening to client that exited
-            clientsOs.remove(0);
-            clients.remove(0);
+            System.out.println(roomName + ":GameManagerImpl,nextTurn: client '" + clients.get(0).getId() +"' doesnt response.client removed.");
+            clients.get(0).terminate();
+            removeCurrentClient();
 
             nextTurn();
         }
     }
 
+    private void removeCurrentClient(){
+        String clientName = clients.get(0).getId();
+        clientsOs.remove(0);
+        clients.remove(0);
+
+        // TODO - is this update should be here
+        GameData update = new GameData(GameData.DataType.UPDATE);
+        update.setContent("update" , "Client '" + clientName +"' disconnected" );
+        sendAllClients(update);
+    }
+
     // collect all users scores and place them in GameData
-    private GameData collectUpdateStatus() {
+    private GameData getGameStatus() {
 
         GameData updateGameData = new GameData(GameData.DataType.UPDATE);
-        updateGameData.setContent("update", getScoreSummary());
+        updateGameData.setContent("scores", getScoreSummary());
         return updateGameData;
     }
 
-    private GameData collectSummary() {
+    private GameData getGameFinishedSummary() {
         GameData summary = new GameData(GameData.DataType.FIN);
         summary.setContent("summary" , getScoreSummary());
         return summary;
@@ -108,8 +173,9 @@ public class GameManagerImpl implements IGameManager {
 
     private String getScoreSummary(){
         String scoresSummary = "";          // TODO - replace with StringBuilder
-        for (Map.Entry<String,Integer> sc : scores.entrySet()){
-            scoresSummary += String.format("player%s:%d ",sc.getKey(),sc.getValue());
+        for (Map.Entry<String,Double> sc : scores.entrySet()){
+            String twoDigitsValue = String.format( "%.1f", sc.getValue() );
+            scoresSummary += String.format("%s:%s ",sc.getKey(),twoDigitsValue);
         }
         return scoresSummary;
     }
@@ -118,6 +184,30 @@ public class GameManagerImpl implements IGameManager {
         Object obj = l.get(0);
         l.remove(0);
         l.add(obj);
+    }
+
+    private void sendAllClients(GameData s) {
+        // sendAllClients is used for updates hence it doesnt throw any exceptions.
+        // issues of client connection are handled in dedicated thread of client
+        System.out.println(roomName + ":GameManagerImpl,sendAllClients: sending " + s);
+        String json = ConnectionUtils.gameDataToJson(s);
+        for (ObjectOutputStream os : clientsOs) {
+            try{
+                ConnectionUtils.sendObjectOutputStream(os, json);
+            }catch (IOException e){
+                // if send fails it will be handled and closed later
+                //e.printStackTrace();
+            }
+        }
+    }
+
+    private String getClientsNames(){
+        // return names in format "name1:name2:..."
+        String names = "";
+        for (ServerWorker c : clients){
+            names += ":" + c.getId();
+        }
+        return names.substring(1);
     }
 
 }

@@ -2,6 +2,7 @@ import java.util.HashMap;
 
 public class GameData implements java.io.Serializable{
 
+    // TODO - make create gamedata with content
     private DataType    type;
     private HashMap<String,String> content;
 
@@ -12,20 +13,20 @@ public class GameData implements java.io.Serializable{
         SKIP,
         FIN
     }
-    public GameData(DataType type){
+    GameData(DataType type){
         this.type = type;
         content = new HashMap<>();
     }
 
-    public DataType getType() {
+    DataType getType() {
         return type;
     }
 
-    public String getContent(String key) {
+    String getContent(String key) {
         return content.get(key);
     }
 
-    public void setContent(String key, String value){
+    void setContent(String key, String value){
         content.put(key,value);
     }
 
