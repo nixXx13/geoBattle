@@ -1,0 +1,50 @@
+Which of the following has the greatest population?,Iraq,Canada,Sweden,Austria
+Which of the following has the greatest urban population?,Australia,Sweden,Italy,Thailand
+Which of the following is the capital of Belgium,Brussels,Paris,Berlin,Stockholm
+Which of the following has the greatest area?,Argentina,South Africa,Germany,Israel
+Which of the following has the greatest population?,Philippines,Italy,Somalia,Malta
+Which of the following has the greatest urban population?,Switzerland,Canada,Spain,Libya
+Which of the following has the greatest population?,Mexico,South Africa,Ghana,Israel
+Which of the following has the greatest area?,Libya,United Kingdom,Belgium,Lebanon
+Which of the following is the capital of Austria,Vienna,Brasília,Vientiane (Viangchan),Lisbon
+Which of the following is the capital of Cuba,Havana,Addis Ababa,Valletta,Bangkok
+Which of the following is the capital of Chile,Santiago,Havana,Helsinki,Athens
+Which of the following has the greatest area?,Iraq,Austria,Georgia,Latvia
+Which of the following has the greatest urban population?,United Arab Emirates,United Kingdom,Spain,Portugal
+Which of the following has the greatest population?,China,Colombia,Cuba,Greece
+Which of the following has the greatest population?,Canada,Paraguay,Lebanon,Laos
+Which of the following has the greatest urban population?,Switzerland,France,Libya,Thailand
+Which of the following has the greatest urban population?,Lebanon,Canada,Peru,Poland
+Which of the following has the greatest urban population?,Venezuela,Greece,Germany,China
+Which of the following is the capital of Belgium,Brussels,Havana,Athens,Madrid
+Which of the following has the greatest urban population?,Malta,Czech Republic,Iraq,Ethiopia
+Which of the following has the greatest urban population?,Israel,Andorra,Cuba,Thailand
+Which of the following has the greatest area?,Australia,Paraguay,Philippines,Georgia
+Which of the following has the greatest population?,China,United Kingdom,Iraq,Ecuador
+Which of the following has the greatest area?,Chile,Spain,Iraq,Israel
+Which of the following has the greatest area?,China,South Africa,Paraguay,Croatia
+Which of the following has the greatest population?,Cuba,Austria,Switzerland,Georgia
+Which of the following has the greatest population?,Mexico,Thailand,Italy,Israel
+Which of the following is the capital of Australia,Canberra,Vientiane (Viangchan),Beirut,Tripoli
+Which of the following is the capital of Chile,Santiago,Accra,Rome,Lisbon
+Which of the following is the capital of Ethiopia,Addis Ababa,Tbilisi,Dublin,Mogadishu
+Which of the following is the capital of Argentina,Buenos Aires,Beijing (Peking),Bogotá,Accra
+Which of the following has the greatest population?,United Kingdom,France,Venezuela,Croatia
+Which of the following is the capital of Czech Republic,Prague,Berlin,Vientiane (Viangchan),Washington D.C.
+Which of the following has the greatest population?,Argentina,Iraq,Ghana,Greece
+Which of the following has the greatest urban population?,Belgium,Andorra,Canada,France
+Which of the following has the greatest population?,Colombia,Cuba,Czech Republic,Libya
+Which of the following is the capital of Ethiopia,Addis Ababa,Berlin,Valletta,Bern
+Which of the following has the greatest population?,Mexico,Thailand,South Africa,Israel
+Which of the following is the capital of Canada,Ottawa,Valletta,Asunción,Bern
+Which of the following is the capital of Belgium,Brussels,Santiago,Cairo,Riga
+Which of the following has the greatest population?,Argentina,Paraguay,Georgia,Andorra
+Which of the following has the greatest population?,United Kingdom,Venezuela,Austria,Paraguay
+Which of the following has the greatest population?,Germany,Cuba,Austria,Latvia
+Which of the following has the greatest population?,Chile,Ecuador,Portugal,Paraguay
+Which of the following has the greatest urban population?,Belgium,Brazil,Germany,Ecuador
+Which of the following has the greatest urban population?,Belgium,Spain,Germany,Georgia
+Which of the following has the greatest population?,Kenya,Venezuela,Ireland,Swaziland
+Which of the following has the greatest area?,Sweden,Germany,Laos,Ireland
+Which of the following has the greatest urban population?,Andorra,Canada,Libya,Peru
+Which of the following has the greatest area?,Brazil,Mexico,Egypt,Ireland
