@@ -7,8 +7,8 @@ import java.util.Map;
 public class GameManagerImpl implements IGameManager {
 
     private MainManager                 mainManager;
-    private List<GameData>              turnsData;
-    private List<String>                turnsDataAnswer;
+    private List<List<GameData>>        turnsData;
+    private List<List<String>>          turnsDataAnswer;
     private final int                   NUM_PLAYERS;
     private int                         playersJoined;
     private int                         playersReady;
@@ -17,7 +17,7 @@ public class GameManagerImpl implements IGameManager {
     private List<ServerWorker>          clients;
     private HashMap<String,Double>     scores ;
 
-    GameManagerImpl(MainManager mainManager , String roomName , int numPlayers, List<ObjectOutputStream> clientsOs, List<ServerWorker> clients, List<GameData> turnsData, List<String> turnsDataAnswer){
+    GameManagerImpl(MainManager mainManager , String roomName , int numPlayers, List<ObjectOutputStream> clientsOs, List<ServerWorker> clients, List<List<GameData>> turnsData, List<List<String>> turnsDataAnswer){
         this.mainManager        = mainManager;
         this.clientsOs          = clientsOs;
         this.clients            = clients;
@@ -55,22 +55,22 @@ public class GameManagerImpl implements IGameManager {
         pushFirstToLast(clientsOs);
         pushFirstToLast(clients);
 
-        // TODO - refactor - turnsData should be separated for each player
-        // removing question from question queue
-        turnsData.remove(0);
-        turnsDataAnswer.remove(0);
+        turnsData.get(0).remove(0);
+        turnsDataAnswer.get(0).remove(0);
+        pushFirstToLast(turnsData);
+        pushFirstToLast(turnsDataAnswer);
 
         nextTurn();
     }
 
     @Override
     public GameData getTurnGameData() {
-        return turnsData.get(0);
+        return turnsData.get(0).get(0);
     }
 
     @Override
     public String getTurnGameDataAnswer() {
-        return turnsDataAnswer.get(0);
+        return turnsDataAnswer.get(0).get(0);
     }
 
     @Override
@@ -80,11 +80,6 @@ public class GameManagerImpl implements IGameManager {
             System.out.println( roomName + ":GameManagerImpl,clientExit: client '" + id +"' exited during own turn, removing client");
             removeCurrentClient();
 
-            // TODO - refactor - turnsData should be separated for each player
-            if (!turnsData.isEmpty()) {
-                turnsData.remove(0);
-                turnsDataAnswer.remove(0);
-            }
             nextTurn();
         }
     }
@@ -118,7 +113,7 @@ public class GameManagerImpl implements IGameManager {
 
         //checking if there is a next turn -
         // game ended? any questions left?
-        if (turnsData.isEmpty()){
+        if (turnsData.get(0).isEmpty()){
             GameData summary = getGameFinishedSummary();
             sendAllClients(summary);
             mainManager.removeGameManager(roomName);
@@ -150,6 +145,10 @@ public class GameManagerImpl implements IGameManager {
         String clientName = clients.get(0).getId();
         clientsOs.remove(0);
         clients.remove(0);
+
+        turnsData.remove(0);
+        turnsDataAnswer.remove(0);
+
 
         // TODO - is this update should be here
         GameData update = new GameData(GameData.DataType.UPDATE);

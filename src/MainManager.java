@@ -1,18 +1,25 @@
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
 
 class MainManager {
 
+    private List<String> questionRaw;
     private boolean run;
     private Map<String,IGameManager> gameManagers = Collections.synchronizedMap(new HashMap<>());
 
     MainManager(){
         run = true;
+
+        questionRaw = new ArrayList<>();
+        readFile();
+
+        List<List<GameData>> data = new ArrayList<>();
+        List<List<String>> answers = new ArrayList<>();
+        getData(data, answers, 2);
+
+
     }
 
     void start() throws IOException{
@@ -79,6 +86,23 @@ class MainManager {
 
     }
 
+    private void readFile(){
+        BufferedReader reader;
+        try {
+            reader = new BufferedReader(new FileReader(
+                    "C:\\Users\\Nir\\IdeaProjects\\testServer\\src\\qs.txt"));
+            String line = reader.readLine();
+            while (line != null) {
+                System.out.println(line);
+                questionRaw.add(line);
+                // read next line
+                line = reader.readLine();
+            }
+            reader.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
     private IGameManager initGameManagerSettings(GameData dataConnection){
 
         String roomPassword = dataConnection.getContent("roomPassword");
@@ -89,9 +113,9 @@ class MainManager {
         List<ObjectOutputStream> osAll = new ArrayList<>();
 
         // data for the room
-        List<GameData> data = new ArrayList<>();
-        List<String> answers = new ArrayList<>();
-        Main.getData(data, answers, roomSize);
+        List<List<GameData>> data = new ArrayList<>();
+        List<List<String>> answers = new ArrayList<>();
+        getData(data, answers, roomSize);
 
         return new GameManagerImpl(this ,roomName , roomSize, osAll, serverWorkers, data, answers);
     }
@@ -105,5 +129,50 @@ class MainManager {
         ConnectionUtils.closeStream(st1);
         ConnectionUtils.closeStream(st2);
         ConnectionUtils.closeSocket(s);
+    }
+
+        /*
+    TODO - Fetch data from DB
+     */
+    void getData(List<List<GameData>> data, List<List<String>> answers, int numPlayers) {
+
+        // TODO - organize
+        int QUESTION_NUMBER = 5;
+        int COUNTRIES_NUMBER = 50;
+
+        List<Integer> indexes = new ArrayList<>();
+        for ( int i = 0 ; i < COUNTRIES_NUMBER ; i++){
+            indexes.add(i);
+        }
+        Collections.shuffle(indexes);
+
+        for ( int i=0 ; i<numPlayers  ; i++) {
+            List<GameData> playerData = new ArrayList<>();
+            List<String> playerAnswers = new ArrayList<>();
+            data.add(playerData);
+            answers.add(playerAnswers);
+        }
+
+        for ( int j = 0 ; j<QUESTION_NUMBER; j++){
+
+            int id = indexes.get(j);
+            String qRaw = questionRaw.get(id);
+            String[] sQRaw = qRaw.split(",");
+
+            GameData questionGameData5 = new GameData(GameData.DataType.QUESTION);
+            questionGameData5.setContent("question", sQRaw[0]);
+            questionGameData5.setContent("pAnswer0", sQRaw[1]);
+            questionGameData5.setContent("pAnswer1", sQRaw[2]);
+            questionGameData5.setContent("pAnswer2", sQRaw[3]);
+            questionGameData5.setContent("pAnswer3", sQRaw[4]);
+
+            //filling q's for player i
+            for ( int i=0 ; i<numPlayers  ; i++){
+                data.get(i).add(questionGameData5);
+                answers.get(i).add(sQRaw[1]);
+
+            }
+        }
+
     }
 }
